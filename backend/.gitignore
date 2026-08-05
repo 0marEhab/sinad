@@ -1,0 +1,12 @@
+node_modules
+# Keep environment variables out of version control
+.env
+
+/generated/prisma
+
+/seed.js
+/.claude
+/.agents
+/.windsurf
+/dist
+/docker-compose.yml

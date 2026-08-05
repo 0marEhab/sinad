@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  passwordHash String
+  name         String?
+  refreshToken String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  invoices     Invoice[]
+  clients      Client[]
+}
+
+model Client {
+  id            String    @id @default(cuid())
+  clientName    String
+  companyName   String?
+  contactPerson String?
+  email         String
+  phoneNumber   String?
+  address       String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  createdBy     User      @relation(fields: [userId], references: [id])
+  userId        String
+  invoices      Invoice[]
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  invoiceNumber String        @unique
+  status        InvoiceStatus @default(UNPAID)
+  issueDate     DateTime
+  dueDate       DateTime
+  projectName   String?
+  notes         String?
+  subtotal      Decimal       @db.Decimal(12, 3)
+  discount      Decimal       @default(0) @db.Decimal(12, 3)
+  taxRate       Decimal       @default(0) @db.Decimal(5, 2)
+  total         Decimal       @db.Decimal(12, 3)
+  amountPaid    Decimal       @default(0) @db.Decimal(12, 3)
+  balanceDue    Decimal       @db.Decimal(12, 3)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  client        Client        @relation(fields: [clientId], references: [id])
+  clientId      String
+  createdBy     User          @relation(fields: [userId], references: [id])
+  userId        String
+  lineItems     LineItem[]
+  payments      Payment[]
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PARTIAL
+  PAID
+}
+
+model LineItem {
+  id          String  @id @default(cuid())
+  description String
+  notes       String?
+  quantity    Decimal @db.Decimal(10, 3)
+  unitPrice   Decimal @db.Decimal(12, 3)
+  amount      Decimal @db.Decimal(12, 3)
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  invoiceId   String
+}
+
+model Payment {
+  id        String        @id @default(cuid())
+  amount    Decimal       @db.Decimal(12, 3)
+  method    PaymentMethod
+  reference String?
+  paidAt    DateTime
+  notes     String?
+  invoice   Invoice       @relation(fields: [invoiceId], references: [id])
+  invoiceId String
+  createdAt DateTime      @default(now())
+}
+
+enum PaymentMethod {
+  BANK_TRANSFER
+  KNET
+  CASH
+  CHEQUE
+  OTHER
+}
